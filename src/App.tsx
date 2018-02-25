@@ -1,22 +1,19 @@
 import * as React from 'react';
+import RepaymentsForm from './components/RepaymentsForm';
 import './App.css';
-
-const logo = require('./logo.svg');
 
 class App extends React.Component {
   render() {
     return (
       <div className="App">
         <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <h1 className="App-title">Welcome to React</h1>
+          <h1 className="App-title">Mortgage Calculator</h1>
         </header>
-        <p className="App-intro">
-          React app goes here!
-        </p>
+        <RepaymentsForm />
       </div>
     );
   }
+
 }
 
 export default App;
