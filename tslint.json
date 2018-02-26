@@ -54,7 +54,7 @@
         "no-trailing-whitespace": false,
         "no-unused-expression": true,
         "no-unused-variable": false,
-        "no-use-before-declare": true,
+        "no-use-before-declare": false,
         "one-line": [
             true,
             "check-catch",
