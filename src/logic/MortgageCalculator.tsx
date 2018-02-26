@@ -18,14 +18,14 @@ export namespace Mortgage {
             let periodicInterestRate = interestRate / 100 / frequency;
 
             if (repaymentType === RepaymentType.InterestOnly) {
-                return (principal * periodicInterestRate);
+                return principal * periodicInterestRate;
             }
 
             let numberOfPayments = loanTerm * frequency;
             let discountFactor = (Math.pow(1 + periodicInterestRate, numberOfPayments) - 1) /
                 (periodicInterestRate * Math.pow(1 + periodicInterestRate, numberOfPayments));
 
-            return (principal / discountFactor);
+            return principal / discountFactor;
         }
     }
 }

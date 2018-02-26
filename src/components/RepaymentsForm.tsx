@@ -51,7 +51,7 @@ export default class RepaymentsForm extends React.Component<any, any> {
         return (
             <Form>
                 <Row>
-                    <Col sm="4">
+                    <Col sm="4" xs="12">
                         <FormGroup>
                             <Label>Principal</Label>
                             <InputGroup>
@@ -70,7 +70,7 @@ export default class RepaymentsForm extends React.Component<any, any> {
                             <FormText>The amount of the loan</FormText>
                         </FormGroup>
                     </Col>
-                    <Col sm="4">
+                    <Col sm="4" xs="12">
                         <FormGroup>
                             <Label>Loan Term</Label>
                             <InputGroup>
@@ -87,7 +87,7 @@ export default class RepaymentsForm extends React.Component<any, any> {
                             </InputGroup>
                         </FormGroup>
                     </Col>
-                    <Col sm="4">
+                    <Col sm="4" xs="12">
                         <FormGroup>
                             <Label>Interest Rate</Label>
                             <InputGroup>
