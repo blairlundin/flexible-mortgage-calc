@@ -87,7 +87,7 @@ export default class RepaymentsTable extends React.Component<any, any> {
         });
 
         return (
-            <Table>
+            <Table className="table-sm">
                 <thead>
                     <tr>
                         <th>Year</th>
