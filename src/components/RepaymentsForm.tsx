@@ -7,6 +7,7 @@ import {
 } from 'reactstrap';
 import { Mortgage } from '../logic/MortgageCalculator';
 import RepaymentAmount from './RepaymentAmount';
+import RepaymentsTable from './RepaymentsTable';
 
 // interface RepaymentsFormState {
 //     principal: number;
@@ -21,7 +22,7 @@ export default class RepaymentsForm extends React.Component<any, any> {
     constructor(props: any) {
         super(props);
         this.state = { 
-            principal: 300000,
+            principal: 280000,
             loanTerm: 30,
             interestRate: 4,
             frequency: Mortgage.PaymentFrequency.Monthly,
@@ -157,6 +158,11 @@ export default class RepaymentsForm extends React.Component<any, any> {
                 <Row>
                     <Col sm={{ size: 8, offset: 2 }}>
                         <RepaymentAmount {...this.state} />
+                    </Col>
+                </Row>
+                <Row>
+                    <Col sm={{ size: 8, offset: 2 }}>
+                        <RepaymentsTable {...this.state} />
                     </Col>
                 </Row>
             </Form>

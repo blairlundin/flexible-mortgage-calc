@@ -16,10 +16,12 @@ export default class RepaymentAmount extends React.Component<any, any> {
             this.props.frequency,
             this.props.repaymentType);
 
+        var moneyFormat = new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' });
+
         return (
             <div>
                 {repayments ? (
-                    <Alert color="info" className="text-center mt-5">Repayments: <strong>${repayments.toFixed(2)}</strong> {Mortgage.PaymentFrequency[this.props.frequency].toLowerCase()}</Alert>
+                    <Alert color="info" className="text-center mt-4 mb-3">Repayments: <strong>{moneyFormat.format(repayments)}</strong> {Mortgage.PaymentFrequency[this.props.frequency].toLowerCase()}</Alert>
                 ) : (
                     <p>Enter details to find repayment amount</p>
                 )}
