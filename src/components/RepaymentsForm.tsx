@@ -51,8 +51,8 @@ export default class RepaymentsForm extends React.Component<any, any> {
     render() {
         return (
             <Form>
-                <Row>
-                    <Col sm="4" xs="12">
+                <Row className="justify-content-center">
+                    <Col sm="2" xs="12">
                         <FormGroup>
                             <Label>Principal</Label>
                             <InputGroup>
@@ -71,7 +71,7 @@ export default class RepaymentsForm extends React.Component<any, any> {
                             <FormText>The amount of the loan</FormText>
                         </FormGroup>
                     </Col>
-                    <Col sm="4" xs="12">
+                    <Col sm="2" xs="12">
                         <FormGroup>
                             <Label>Loan Term</Label>
                             <InputGroup>
@@ -88,7 +88,7 @@ export default class RepaymentsForm extends React.Component<any, any> {
                             </InputGroup>
                         </FormGroup>
                     </Col>
-                    <Col sm="4" xs="12">
+                    <Col sm="2" xs="12">
                         <FormGroup>
                             <Label>Interest Rate</Label>
                             <InputGroup>
@@ -106,8 +106,8 @@ export default class RepaymentsForm extends React.Component<any, any> {
                         </FormGroup>
                     </Col>
                 </Row>
-                <Row>
-                    <Col sm={{ size: 4, offset: 2 }}>
+                <Row className="justify-content-center">
+                    <Col sm={{ size: 'auto' }}>
                         <FormGroup>
                         <ButtonGroup>
                             <Button
@@ -134,7 +134,7 @@ export default class RepaymentsForm extends React.Component<any, any> {
                         </ButtonGroup>
                         </FormGroup>
                     </Col>
-                    <Col sm={{ size: 4, offset: 1 }}>
+                    <Col sm={{ size: 'auto' }}>
                         <FormGroup>
                         <ButtonGroup>
                             <Button
