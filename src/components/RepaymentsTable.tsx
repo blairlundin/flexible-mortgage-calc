@@ -47,6 +47,9 @@ export default class RepaymentsTable extends React.Component<any, any> {
 
         const addRepaymentInterest = (a: any, b: any) => a + b.interest;
         let totalOwing = repayment * numberOfRepayments;
+        if (this.props.repaymentType === Mortgage.RepaymentType.InterestOnly) {
+            totalOwing += parseFloat(this.props.principal);
+        }
         remainingPrincipal = this.props.principal;
         
         let annualPayments: RepaymentsTableRow[] = [];
@@ -91,7 +94,7 @@ export default class RepaymentsTable extends React.Component<any, any> {
             labels: annualPayments.map(a => a.year.toString(10)),
             datasets: [
               {
-                label: 'Total amount owing',
+                label: 'Owing',
                 fill: true,
                 lineTension: 0.1,
                 backgroundColor: 'rgba(75,192,192,0.4)',
@@ -110,6 +113,27 @@ export default class RepaymentsTable extends React.Component<any, any> {
                 pointRadius: 1,
                 pointHitRadius: 10,
                 data: annualPayments.map(a => parseFloat(a.totalOwing.toFixed(2)))
+              },
+              {
+                label: 'Principal',
+                fill: true,
+                lineTension: 0.1,
+                backgroundColor: 'rgba(75,192,192,0.8)',
+                borderColor: 'rgba(75,192,192,1)',
+                borderCapStyle: 'butt',
+                borderDash: [],
+                borderDashOffset: 0.0,
+                borderJoinStyle: 'miter',
+                pointBorderColor: 'rgba(75,192,192,1)',
+                pointBackgroundColor: '#fff',
+                pointBorderWidth: 1,
+                pointHoverRadius: 5,
+                pointHoverBackgroundColor: 'rgba(75,192,192,1)',
+                pointHoverBorderColor: 'rgba(220,220,220,1)',
+                pointHoverBorderWidth: 2,
+                pointRadius: 1,
+                pointHitRadius: 10,
+                data: annualPayments.map(a => parseFloat(a.remainingPrincipal.toFixed(2)))
               }
             ]
         };
