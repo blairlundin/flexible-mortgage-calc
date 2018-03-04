@@ -6,8 +6,8 @@ import {
     Row, Col 
 } from 'reactstrap';
 import { Mortgage } from '../logic/MortgageCalculator';
-import RepaymentAmount from './RepaymentAmount';
 import RepaymentsTable from './RepaymentsTable';
+// import  LocalStorageMixin from 'react-localstorage';
 
 // interface RepaymentsFormState {
 //     principal: number;
@@ -23,25 +23,25 @@ export default class RepaymentsForm extends React.Component<any, any> {
         super(props);
         this.state = { 
             principal: 280000,
+            extraRepayment: 0,
             loanTerm: 30,
             interestRate: 4,
             frequency: Mortgage.PaymentFrequency.Monthly,
             repaymentType: Mortgage.RepaymentType.PrincipalAndInterest
          };
 
-        this.handleChange = this.handleChange.bind(this);
-        this.handleRadioChange = this.handleRadioChange.bind(this);
+        this.handleChangeFloat = this.handleChangeFloat.bind(this);
+        this.handleChangeInt = this.handleChangeInt.bind(this);
     }
 
-    handleChange(event: any) {
-        const target = event.target;
-        const value = target.type === 'checkbox' ? target.checked : target.value;
-        const name = target.name;
+    handleChangeFloat(event: any) {
+        const name = event.target.name;
+        let floatValue = parseFloat(event.target.value);
 
-        this.setState({ [name]: value });
+        this.setState({ [name]: floatValue });
     }
 
-    handleRadioChange(event: any) {
+    handleChangeInt(event: any) {
         let name = event.target.name;
         let value = event.target.value;
         let intValue = parseInt(value, 10);
@@ -64,7 +64,7 @@ export default class RepaymentsForm extends React.Component<any, any> {
                                     min="5000"
                                     max="10000000"
                                     value={this.state.principal} 
-                                    onChange={this.handleChange} 
+                                    onChange={this.handleChangeInt} 
                                     
                                 />
                             </InputGroup>
@@ -81,8 +81,8 @@ export default class RepaymentsForm extends React.Component<any, any> {
                                     step="1"
                                     min="5"
                                     max="30"
-                                    value={this.state.loanTerm} 
-                                    onChange={this.handleChange} 
+                                    value={this.state.loanTerm}
+                                    onChange={this.handleChangeInt} 
                                 />
                                 <InputGroupAddon addonType="append">years</InputGroupAddon>
                             </InputGroup>
@@ -99,7 +99,7 @@ export default class RepaymentsForm extends React.Component<any, any> {
                                     min="0.1"
                                     max="20"
                                     value={this.state.interestRate} 
-                                    onChange={this.handleChange}
+                                    onChange={this.handleChangeFloat}
                                 />
                                 <InputGroupAddon addonType="append">%</InputGroupAddon>
                             </InputGroup>
@@ -155,16 +155,29 @@ export default class RepaymentsForm extends React.Component<any, any> {
                         </FormGroup>
                     </Col>
                 </Row>
-                <Row>
-                    <Col sm={{ size: 8, offset: 2 }}>
-                        <RepaymentAmount {...this.state} />
+                <Row className="justify-content-center">
+                    <Col sm="2" xs="12">
+                        <FormGroup>
+                            <Label>Extra Repayment</Label>
+                            <InputGroup>
+                                <InputGroupAddon addonType="prepend">$</InputGroupAddon>
+                                <Input 
+                                    type="number" 
+                                    name="extraRepayment" 
+                                    step="100"
+                                    min="0"
+                                    max="10000"
+                                    value={this.state.extraRepayment} 
+                                    onChange={this.handleChangeInt} 
+                                    
+                                />
+                            </InputGroup>
+                            <FormText>The amount extra to pay per repayment</FormText>
+                        </FormGroup>
                     </Col>
+                    <Col sm="4" xs="12" />
                 </Row>
-                <Row>
-                    <Col sm={{ size: 8, offset: 2 }}>
-                        <RepaymentsTable {...this.state} />
-                    </Col>
-                </Row>
+                <RepaymentsTable {...this.state} />                
             </Form>
         );
     }
