@@ -169,7 +169,7 @@ export default class RepaymentsForm extends React.Component<any, any> {
                                     max="10000"
                                     value={this.state.extraRepayment} 
                                     onChange={this.handleChangeInt} 
-                                    
+                                    readOnly={this.state.repaymentType === Mortgage.RepaymentType.InterestOnly}
                                 />
                             </InputGroup>
                             <FormText>The amount extra to pay per repayment</FormText>

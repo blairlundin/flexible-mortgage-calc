@@ -11,6 +11,19 @@ export namespace Mortgage {
         InterestOnly
     }
 
+    export interface MortgageRepayment {
+        interest: number;
+        principal: number;
+        remainingPrincipal: number;
+        amountOwing: number;
+    }
+
+    export interface MortgageAmortisation {
+
+        repaymentAmount: number;
+        repayments: MortgageRepayment[];
+    }
+
     export class MortgageCalculator {
         calculateRepayments(principal: number, loanTerm: number, interestRate: number,
                             frequency: PaymentFrequency, repaymentType: RepaymentType): number {

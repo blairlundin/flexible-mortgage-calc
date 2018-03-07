@@ -72,15 +72,27 @@ export default class RepaymentsTable extends React.Component<any, any> {
             totalOwing: totalOwing
         });
 
-        for (let i = 1; i <= this.props.loanTerm; i++) {
+        const yearsUntilPaidOff = Math.floor((repaymentsArray.length - 1) / this.props.frequency);
+        const monthsUntilPaidOff = (repaymentsArray.length - 1) % this.props.frequency;
+
+        let loopYears = Math.ceil((repaymentsArray.length - 1) / this.props.frequency);
+        for (let i = 1; i <= loopYears; i++) {
             let start = (i - 1) * this.props.frequency + 1;
             let end = i * this.props.frequency + 1;
             let annualInterest = repaymentsArray.slice(start, end).reduce(addRepaymentInterest, 0);
             let annualRepayments = repayment * this.props.frequency;
-            remainingPrincipal = this.props.repaymentType === Mortgage.RepaymentType.PrincipalAndInterest ? 
-                                 remainingPrincipal - (annualRepayments - annualInterest)
-                                 : remainingPrincipal;
-            totalOwing = totalOwing - annualRepayments;
+            let principalToDeduct = annualRepayments - annualInterest;
+            
+            if (principalToDeduct > remainingPrincipal) {
+                remainingPrincipal = 0;
+                totalOwing = this.props.repaymentType === Mortgage.RepaymentType.PrincipalAndInterest ? 0 : this.props.principal;
+            } else {
+                remainingPrincipal = this.props.repaymentType === Mortgage.RepaymentType.PrincipalAndInterest ? 
+                                    remainingPrincipal - principalToDeduct
+                                    : remainingPrincipal;
+                totalOwing = totalOwing - annualRepayments;
+            }
+            
             annualPayments.push({
                 year: i,
                 interest: annualInterest,
@@ -96,8 +108,8 @@ export default class RepaymentsTable extends React.Component<any, any> {
                 <tr key={row.year}>
                     <th scope="row">{row.year === 0 ? '' : row.year}</th>
                     <td>{row.interest == null ? '' : moneyFormat.format(row.interest)}</td>
-                    <td>{row.remainingPrincipal < 0 ? moneyFormat.format(0) : moneyFormat.format(row.remainingPrincipal)}</td>
-                    <td>{row.totalOwing < 0 ? moneyFormat.format(0) : moneyFormat.format(row.totalOwing)}</td>
+                    <td>{moneyFormat.format(row.remainingPrincipal)}</td>
+                    <td>{moneyFormat.format(row.totalOwing)}</td>
                 </tr>
             );
         });
@@ -225,6 +237,7 @@ export default class RepaymentsTable extends React.Component<any, any> {
                     <Alert color="info" className="text-center mt-4 mb-3">
                         Repayments: <strong>{moneyFormat.format(repayment)}</strong> {Mortgage.PaymentFrequency[this.props.frequency].toLowerCase()}
                         <p className="mb-0">Total interest payable: <strong>{moneyFormat.format(totalInterest)}</strong></p>
+                        <p>Time until paid off: <strong>{yearsUntilPaidOff} years {monthsUntilPaidOff} months</strong></p>
                     </Alert>
                     </Col>
                 </Row>
