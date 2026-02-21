@@ -2,7 +2,6 @@ import * as React from 'react';
 import { Mortgage } from '../logic/MortgageCalculator';
 import { Alert, Table } from 'reactstrap';
 import { Line } from 'react-chartjs-2';
-import { isNullOrUndefined } from 'util';
 import { Container, Row, Col } from 'reactstrap';
 
 let mortgageCalc = new Mortgage.MortgageCalculator();
@@ -207,14 +206,14 @@ export default class RepaymentsTable extends React.Component<any, any> {
                 mode: 'index',
                 callbacks: {
                     title: function(tooltips: Chart.ChartTooltipItem[], data: Chart.ChartData) {
-                        if (isNullOrUndefined(data.labels) || isNullOrUndefined(tooltips[0]) || isNullOrUndefined(tooltips[0].index)) {
+                        if (data.labels == null || tooltips[0] == null || tooltips[0].index == null) {
                             return '';
                         }
 
                         return 'Year '  + tooltips[0].index;
                     },
                     label: function(tooltipItem: Chart.ChartTooltipItem, data: Chart.ChartData): string {
-                        if (isNullOrUndefined(data.datasets) || isNullOrUndefined(tooltipItem.datasetIndex) || isNullOrUndefined(tooltipItem.yLabel)) {
+                        if (data.datasets == null || tooltipItem.datasetIndex == null || tooltipItem.yLabel == null) {
                             return '';
                         }
                         
@@ -223,7 +222,7 @@ export default class RepaymentsTable extends React.Component<any, any> {
                         if (label) {
                             label += ': ';
                         }
-                        label += moneyFormat.format(parseFloat(tooltipItem.yLabel));
+                        label += moneyFormat.format(parseFloat(String(tooltipItem.yLabel)));
                         return label;
                     }
                 }
