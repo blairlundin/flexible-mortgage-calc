@@ -10,7 +10,7 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "skipLibCheck": true,
-    "strict": false,
+    "strict": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true
   },
