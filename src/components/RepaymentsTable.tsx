@@ -214,6 +214,9 @@ export default function RepaymentsTable({
                             return '$0';
                         }
                         if (intValue % 100000 === 0) {
+                            if (intValue >= 1000000) {
+                                return '$' + (intValue / 1000000) + 'M';
+                            }
                             return '$' + (intValue / 1000) + 'k';
                         } else {
                             return '';
