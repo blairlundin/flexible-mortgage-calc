@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { PaymentFrequency, RepaymentType, MortgageCalculator } from '../logic/MortgageCalculator';
-import { Alert, Table } from 'reactstrap';
+import { Alert, Table, Collapse } from 'reactstrap';
 import { Line } from 'react-chartjs-2';
 import {
     Chart as ChartJS,
@@ -48,6 +49,7 @@ interface RepaymentsTableRow {
 export default function RepaymentsTable({
     principal, extraRepayment, loanTerm, interestRate, frequency, repaymentType
 }: RepaymentsTableProps) {
+    const [scheduleOpen, setScheduleOpen] = useState(false);
     let repayment = mortgageCalc.calculateRepayments(
         principal, loanTerm, interestRate, frequency, repaymentType);
 
@@ -142,17 +144,17 @@ export default function RepaymentsTable({
             label: 'Owing',
             fill: true,
             tension: 0.1,
-            backgroundColor: 'rgba(75,192,192,0.4)',
-            borderColor: 'rgba(75,192,192,1)',
+            backgroundColor: 'rgba(70,130,180,0.35)',
+            borderColor: 'rgba(55,110,165,1)',
             borderCapStyle: 'butt',
             borderDash: [],
             borderDashOffset: 0.0,
             borderJoinStyle: 'miter',
-            pointBorderColor: 'rgba(75,192,192,1)',
+            pointBorderColor: 'rgba(55,110,165,1)',
             pointBackgroundColor: '#fff',
             pointBorderWidth: 1,
             pointHoverRadius: 5,
-            pointHoverBackgroundColor: 'rgba(75,192,192,1)',
+            pointHoverBackgroundColor: 'rgba(55,110,165,1)',
             pointHoverBorderColor: 'rgba(220,220,220,1)',
             pointHoverBorderWidth: 2,
             pointRadius: 3,
@@ -163,17 +165,17 @@ export default function RepaymentsTable({
             label: 'Principal',
             fill: true,
             tension: 0.1,
-            backgroundColor: 'rgba(75,192,192,0.8)',
-            borderColor: 'rgba(75,192,192,1)',
+            backgroundColor: 'rgba(70,130,180,0.7)',
+            borderColor: 'rgba(55,110,165,1)',
             borderCapStyle: 'butt',
             borderDash: [],
             borderDashOffset: 0.0,
             borderJoinStyle: 'miter',
-            pointBorderColor: 'rgba(75,192,192,1)',
+            pointBorderColor: 'rgba(55,110,165,1)',
             pointBackgroundColor: '#fff',
             pointBorderWidth: 1,
             pointHoverRadius: 5,
-            pointHoverBackgroundColor: 'rgba(75,192,192,1)',
+            pointHoverBackgroundColor: 'rgba(55,110,165,1)',
             pointHoverBorderColor: 'rgba(220,220,220,1)',
             pointHoverBorderWidth: 2,
             pointRadius: 3,
@@ -260,19 +262,49 @@ export default function RepaymentsTable({
             <Row>
                 <Col sm={{ size: 8, offset: 2 }}>
                     <Line data={chartData} options={chartOptions} />
-                    <Table className="table-sm mt-5">
-                        <thead>
-                            <tr>
-                                <th>Year</th>
-                                <th>Interest</th>
-                                <th>Principal</th>
-                                <th>Owing</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {tableRows}
-                        </tbody>
-                    </Table>
+                    <button
+                        type="button"
+                        onClick={() => setScheduleOpen(o => !o)}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            width: '100%',
+                            marginTop: '2rem',
+                            padding: '0.75rem 1rem',
+                            background: 'none',
+                            border: '1px solid #dee2e6',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            color: '#495057',
+                            fontSize: '0.95rem',
+                            fontWeight: 500,
+                        }}
+                    >
+                        <span>Full repayment schedule</span>
+                        <span style={{
+                            display: 'inline-block',
+                            transition: 'transform 0.2s ease',
+                            transform: scheduleOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                            fontSize: '0.75rem',
+                            color: '#868e96',
+                        }}>▼</span>
+                    </button>
+                    <Collapse isOpen={scheduleOpen}>
+                        <Table className="table-sm mt-3">
+                            <thead>
+                                <tr>
+                                    <th>Year</th>
+                                    <th>Interest</th>
+                                    <th>Principal</th>
+                                    <th>Owing</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {tableRows}
+                            </tbody>
+                        </Table>
+                    </Collapse>
                 </Col>
             </Row>
         </Container>
