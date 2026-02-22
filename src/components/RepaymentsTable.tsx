@@ -51,7 +51,9 @@ export default function RepaymentsTable({
     let repayment = mortgageCalc.calculateRepayments(
         principal, loanTerm, interestRate, frequency, repaymentType);
 
-    repayment += extraRepayment;
+    if (repaymentType !== RepaymentType.InterestOnly) {
+        repayment += extraRepayment;
+    }
 
     const numberOfRepayments = loanTerm * frequency;
     const repaymentsArray = [];
@@ -73,7 +75,8 @@ export default function RepaymentsTable({
             remainingPrincipal: remainingPrincipal
         };
 
-        if (remainingPrincipal === 0) {
+        if (remainingPrincipal < 0.01) {
+            remainingPrincipal = 0;
             break;
         }
     }
@@ -93,14 +96,16 @@ export default function RepaymentsTable({
     });
 
     const yearsUntilPaidOff = Math.floor((repaymentsArray.length - 1) / frequency);
-    const monthsUntilPaidOff = (repaymentsArray.length - 1) % frequency;
+    const remainingPeriods = (repaymentsArray.length - 1) % frequency;
+    const monthsUntilPaidOff = Math.round(remainingPeriods / (frequency / 12));
 
     const loopYears = Math.ceil((repaymentsArray.length - 1) / frequency);
     for (let i = 1; i <= loopYears; i++) {
         const start = (i - 1) * frequency + 1;
         const end = i * frequency + 1;
-        const annualInterest = repaymentsArray.slice(start, end).reduce(addRepaymentInterest, 0);
-        const annualRepayments = repayment * frequency;
+        const yearSlice = repaymentsArray.slice(start, end);
+        const annualInterest = yearSlice.reduce(addRepaymentInterest, 0);
+        const annualRepayments = repayment * yearSlice.length;
         const principalToDeduct = annualRepayments - annualInterest;
 
         if (principalToDeduct > remainingPrincipal) {

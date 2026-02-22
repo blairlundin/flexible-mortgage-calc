@@ -14,12 +14,14 @@ export default function RepaymentsForm() {
 
     const handleChangeFloat = (event: ChangeEvent<HTMLInputElement>) => {
         const { name, value } = event.target;
-        setField(name as keyof MortgageFormState, parseFloat(value));
+        const parsed = parseFloat(value);
+        if (!isNaN(parsed)) setField(name as keyof MortgageFormState, parsed);
     };
 
     const handleChangeInt = (event: ChangeEvent<HTMLInputElement>) => {
         const { name, value } = event.target;
-        setField(name as keyof MortgageFormState, parseInt(value, 10));
+        const parsed = parseInt(value, 10);
+        if (!isNaN(parsed)) setField(name as keyof MortgageFormState, parsed);
     };
 
     return (
