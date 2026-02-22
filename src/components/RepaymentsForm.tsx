@@ -1,4 +1,4 @@
-import { useState, ChangeEvent } from 'react';
+import { ChangeEvent } from 'react';
 import {
     Form, FormGroup, Label, FormText,
     Input, InputGroup, InputGroupText,
@@ -6,35 +6,20 @@ import {
     Row, Col
 } from 'reactstrap';
 import { PaymentFrequency, RepaymentType } from '../logic/MortgageCalculator';
+import { useMortgageStore, MortgageFormState } from '../store/mortgageStore';
 import RepaymentsTable from './RepaymentsTable';
 
-interface MortgageFormState {
-    principal: number;
-    extraRepayment: number;
-    loanTerm: number;
-    interestRate: number;
-    frequency: PaymentFrequency;
-    repaymentType: RepaymentType;
-}
-
 export default function RepaymentsForm() {
-    const [formState, setFormState] = useState<MortgageFormState>({
-        principal: 280000,
-        extraRepayment: 0,
-        loanTerm: 30,
-        interestRate: 4,
-        frequency: PaymentFrequency.Monthly,
-        repaymentType: RepaymentType.PrincipalAndInterest,
-    });
+    const { setField, ...formState } = useMortgageStore();
 
     const handleChangeFloat = (event: ChangeEvent<HTMLInputElement>) => {
         const { name, value } = event.target;
-        setFormState((prev) => ({ ...prev, [name]: parseFloat(value) }));
+        setField(name as keyof MortgageFormState, parseFloat(value));
     };
 
     const handleChangeInt = (event: ChangeEvent<HTMLInputElement>) => {
         const { name, value } = event.target;
-        setFormState((prev) => ({ ...prev, [name]: parseInt(value, 10) }));
+        setField(name as keyof MortgageFormState, parseInt(value, 10));
     };
 
     return (
@@ -99,21 +84,21 @@ export default function RepaymentsForm() {
                     <ButtonGroup>
                         <Button
                             color="primary"
-                            onClick={() => setFormState((prev) => ({ ...prev, frequency: PaymentFrequency.Weekly }))}
+                            onClick={() => setField('frequency', PaymentFrequency.Weekly)}
                             active={formState.frequency === PaymentFrequency.Weekly}
                         >
                             Weekly
                         </Button>
                         <Button
                             color="primary"
-                            onClick={() => setFormState((prev) => ({ ...prev, frequency: PaymentFrequency.Fortnightly }))}
+                            onClick={() => setField('frequency', PaymentFrequency.Fortnightly)}
                             active={formState.frequency === PaymentFrequency.Fortnightly}
                         >
                             Fortnightly
                         </Button>
                         <Button
                             color="primary"
-                            onClick={() => setFormState((prev) => ({ ...prev, frequency: PaymentFrequency.Monthly }))}
+                            onClick={() => setField('frequency', PaymentFrequency.Monthly)}
                             active={formState.frequency === PaymentFrequency.Monthly}
                         >
                             Monthly
@@ -126,14 +111,14 @@ export default function RepaymentsForm() {
                     <ButtonGroup>
                         <Button
                             color="primary"
-                            onClick={() => setFormState((prev) => ({ ...prev, repaymentType: RepaymentType.PrincipalAndInterest }))}
+                            onClick={() => setField('repaymentType', RepaymentType.PrincipalAndInterest)}
                             active={formState.repaymentType === RepaymentType.PrincipalAndInterest}
                         >
                             Principal and Interest
                         </Button>
                         <Button
                             color="primary"
-                            onClick={() => setFormState((prev) => ({ ...prev, repaymentType: RepaymentType.InterestOnly }))}
+                            onClick={() => setField('repaymentType', RepaymentType.InterestOnly)}
                             active={formState.repaymentType === RepaymentType.InterestOnly}
                         >
                             Interest Only
