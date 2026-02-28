@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { PaymentFrequency, RepaymentType, MortgageCalculator } from '../logic/MortgageCalculator';
+import { PaymentFrequency, RepaymentType, computeAmortization } from '../logic/MortgageCalculator';
+import type { OffsetEntry } from '../logic/MortgageCalculator';
 import { Alert, Table, Collapse } from 'reactstrap';
 import { Line } from 'react-chartjs-2';
 import {
@@ -27,7 +28,6 @@ ChartJS.register(
     Legend
 );
 
-const mortgageCalc = new MortgageCalculator();
 const moneyFormat = new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' });
 
 interface RepaymentsTableProps {
@@ -37,110 +37,56 @@ interface RepaymentsTableProps {
     interestRate: number;
     frequency: PaymentFrequency;
     repaymentType: RepaymentType;
+    offsetEnabled: boolean;
+    offsetEntries: OffsetEntry[];
 }
 
-interface RepaymentsTableRow {
-    year: number;
-    interest: number | null;
-    remainingPrincipal: number;
-    totalOwing: number;
+function padSeries(data: number[], targetLength: number): number[] {
+    const result = [...data];
+    while (result.length < targetLength) result.push(0);
+    return result;
+}
+
+function formatYearsMonths(years: number, months: number): string {
+    if (years === 0) return `${months} months`;
+    if (months === 0) return `${years} years`;
+    return `${years} years ${months} months`;
 }
 
 export default function RepaymentsTable({
-    principal, extraRepayment, loanTerm, interestRate, frequency, repaymentType
+    principal, extraRepayment, loanTerm, interestRate, frequency, repaymentType,
+    offsetEnabled, offsetEntries,
 }: RepaymentsTableProps) {
     const [scheduleOpen, setScheduleOpen] = useState(false);
-    let repayment = mortgageCalc.calculateRepayments(
-        principal, loanTerm, interestRate, frequency, repaymentType);
 
-    if (repaymentType !== RepaymentType.InterestOnly) {
-        repayment += extraRepayment;
-    }
+    const baseResult = computeAmortization(
+        principal, loanTerm, interestRate, frequency, repaymentType, extraRepayment
+    );
 
-    const numberOfRepayments = loanTerm * frequency;
-    const repaymentsArray = [];
-    let remainingPrincipal = principal;
-    for (let i = 1; i <= numberOfRepayments; i++) {
-        const interest = mortgageCalc.calculateRepayments(
-            remainingPrincipal, loanTerm, interestRate, frequency, RepaymentType.InterestOnly
-        );
+    const offsetResult = offsetEnabled && offsetEntries.length > 0
+        ? computeAmortization(
+            principal, loanTerm, interestRate, frequency, repaymentType, extraRepayment, offsetEntries
+        )
+        : null;
 
-        const principalReduction = repayment - interest;
-        if (principalReduction > remainingPrincipal) {
-            remainingPrincipal = 0;
-        } else {
-            remainingPrincipal -= principalReduction;
-        }
+    // Chart data
+    const maxLabels = Math.max(
+        baseResult.annualPayments.length,
+        offsetResult ? offsetResult.annualPayments.length : 0
+    );
+    const chartLabels = Array.from({ length: maxLabels }, (_, i) => i.toString());
 
-        repaymentsArray[i] = {
-            interest: interest,
-            remainingPrincipal: remainingPrincipal
-        };
+    const baseOwingData = padSeries(
+        baseResult.annualPayments.map(a => parseFloat(a.totalOwing.toFixed(2))),
+        maxLabels
+    );
+    const basePrincipalData = padSeries(
+        baseResult.annualPayments.map(a => parseFloat(a.remainingPrincipal.toFixed(2))),
+        maxLabels
+    );
 
-        if (remainingPrincipal < 0.01) {
-            remainingPrincipal = 0;
-            break;
-        }
-    }
-
-    const addRepaymentInterest = (a: number, b: { interest: number }) => a + b.interest;
-    const totalInterest = repaymentsArray.reduce(addRepaymentInterest, 0);
-    let totalOwing = totalInterest + principal;
-
-    remainingPrincipal = principal;
-
-    const annualPayments: RepaymentsTableRow[] = [];
-    annualPayments.push({
-        year: 0,
-        interest: null,
-        remainingPrincipal: remainingPrincipal,
-        totalOwing: totalOwing
-    });
-
-    const yearsUntilPaidOff = Math.floor((repaymentsArray.length - 1) / frequency);
-    const remainingPeriods = (repaymentsArray.length - 1) % frequency;
-    const monthsUntilPaidOff = Math.round(remainingPeriods / (frequency / 12));
-
-    const loopYears = Math.ceil((repaymentsArray.length - 1) / frequency);
-    for (let i = 1; i <= loopYears; i++) {
-        const start = (i - 1) * frequency + 1;
-        const end = i * frequency + 1;
-        const yearSlice = repaymentsArray.slice(start, end);
-        const annualInterest = yearSlice.reduce(addRepaymentInterest, 0);
-        const annualRepayments = repayment * yearSlice.length;
-        const principalToDeduct = annualRepayments - annualInterest;
-
-        if (principalToDeduct > remainingPrincipal) {
-            remainingPrincipal = 0;
-            totalOwing = repaymentType === RepaymentType.PrincipalAndInterest ? 0 : principal;
-        } else {
-            remainingPrincipal = repaymentType === RepaymentType.PrincipalAndInterest ?
-                                remainingPrincipal - principalToDeduct
-                                : remainingPrincipal;
-            totalOwing = totalOwing - annualRepayments;
-        }
-
-        annualPayments.push({
-            year: i,
-            interest: annualInterest,
-            remainingPrincipal: remainingPrincipal,
-            totalOwing: totalOwing
-        });
-    }
-
-    const tableRows = annualPayments.map((row) => (
-        <tr key={row.year}>
-            <th scope="row">{row.year === 0 ? '' : row.year}</th>
-            <td>{row.interest == null ? '' : moneyFormat.format(row.interest)}</td>
-            <td>{moneyFormat.format(row.remainingPrincipal)}</td>
-            <td>{moneyFormat.format(row.totalOwing)}</td>
-        </tr>
-    ));
-
-    const chartData: ChartData<'line'> = {
-        labels: annualPayments.map(a => a.year.toString(10)),
-        datasets: [
-          {
+    const datasets: ChartData<'line'>['datasets'] = [
+        {
             label: 'Owing',
             fill: true,
             tension: 0.1,
@@ -159,9 +105,9 @@ export default function RepaymentsTable({
             pointHoverBorderWidth: 2,
             pointRadius: 3,
             pointHitRadius: 10,
-            data: annualPayments.map(a => parseFloat(a.totalOwing.toFixed(2)))
-          },
-          {
+            data: baseOwingData,
+        },
+        {
             label: 'Principal',
             fill: true,
             tension: 0.1,
@@ -180,82 +126,201 @@ export default function RepaymentsTable({
             pointHoverBorderWidth: 2,
             pointRadius: 3,
             pointHitRadius: 10,
-            data: annualPayments.map(a => parseFloat(a.remainingPrincipal.toFixed(2)))
-          }
-        ]
-    };
+            data: basePrincipalData,
+        },
+    ];
+
+    if (offsetResult) {
+        const offsetOwingData = padSeries(
+            offsetResult.annualPayments.map(a => parseFloat(a.totalOwing.toFixed(2))),
+            maxLabels
+        );
+        const offsetPrincipalData = padSeries(
+            offsetResult.annualPayments.map(a => parseFloat(a.remainingPrincipal.toFixed(2))),
+            maxLabels
+        );
+
+        datasets.push({
+            label: 'Owing (offset)',
+            fill: true,
+            tension: 0.1,
+            backgroundColor: 'rgba(80,200,120,0.35)',
+            borderColor: 'rgba(40,160,80,1)',
+            borderCapStyle: 'butt',
+            borderDash: [6, 3],
+            borderDashOffset: 0.0,
+            borderJoinStyle: 'miter',
+            pointBorderColor: 'rgba(40,160,80,1)',
+            pointBackgroundColor: '#fff',
+            pointBorderWidth: 1,
+            pointHoverRadius: 5,
+            pointHoverBackgroundColor: 'rgba(40,160,80,1)',
+            pointHoverBorderColor: 'rgba(220,220,220,1)',
+            pointHoverBorderWidth: 2,
+            pointRadius: 3,
+            pointHitRadius: 10,
+            data: offsetOwingData,
+        });
+
+        datasets.push({
+            label: 'Principal (offset)',
+            fill: true,
+            tension: 0.1,
+            backgroundColor: 'rgba(80,200,120,0.7)',
+            borderColor: 'rgba(40,160,80,1)',
+            borderCapStyle: 'butt',
+            borderDash: [6, 3],
+            borderDashOffset: 0.0,
+            borderJoinStyle: 'miter',
+            pointBorderColor: 'rgba(40,160,80,1)',
+            pointBackgroundColor: '#fff',
+            pointBorderWidth: 1,
+            pointHoverRadius: 5,
+            pointHoverBackgroundColor: 'rgba(40,160,80,1)',
+            pointHoverBorderColor: 'rgba(220,220,220,1)',
+            pointHoverBorderWidth: 2,
+            pointRadius: 3,
+            pointHitRadius: 10,
+            data: offsetPrincipalData,
+        });
+    }
+
+    const chartData: ChartData<'line'> = { labels: chartLabels, datasets };
 
     const chartOptions: ChartOptions<'line'> = {
-        animation: {
-            duration: 500
-        },
+        animation: { duration: 500 },
         responsive: true,
         scales: {
             x: {
-                title: {
-                    display: true,
-                    text: 'Year'
-                },
+                title: { display: true, text: 'Year' },
                 ticks: {
-                    callback: function(value: string | number): string {
+                    callback: function (value: string | number): string {
                         const intValue = typeof value === 'number' ? value : parseInt(value, 10);
-                        if (intValue % 5 === 0) {
-                            return intValue.toString();
-                        } else {
-                            return '';
-                        }
-                    }
-                }
+                        return intValue % 5 === 0 ? intValue.toString() : '';
+                    },
+                },
             },
             y: {
                 min: 0,
                 ticks: {
-                    callback: function(value: string | number): string {
+                    callback: function (value: string | number): string {
                         const intValue = typeof value === 'number' ? value : parseInt(value, 10);
-                        if (intValue === 0) {
-                            return '$0';
-                        }
+                        if (intValue === 0) return '$0';
                         if (intValue % 100000 === 0) {
-                            if (intValue >= 1000000) {
-                                return '$' + (intValue / 1000000) + 'M';
-                            }
-                            return '$' + (intValue / 1000) + 'k';
-                        } else {
-                            return '';
+                            return intValue >= 1000000
+                                ? '$' + intValue / 1000000 + 'M'
+                                : '$' + intValue / 1000 + 'k';
                         }
-                    }
-                }
-            }
+                        return '';
+                    },
+                },
+            },
         },
         plugins: {
             tooltip: {
                 mode: 'index',
                 callbacks: {
-                    title: function(tooltipItems: TooltipItem<'line'>[]): string {
+                    title: function (tooltipItems: TooltipItem<'line'>[]): string {
                         return tooltipItems.length > 0 ? 'Year ' + tooltipItems[0].dataIndex : '';
                     },
-                    label: function(tooltipItem: TooltipItem<'line'>): string {
+                    label: function (tooltipItem: TooltipItem<'line'>): string {
                         let label = tooltipItem.dataset.label || '';
-                        if (label) {
-                            label += ': ';
-                        }
+                        if (label) label += ': ';
                         label += moneyFormat.format(tooltipItem.raw as number);
                         return label;
-                    }
-                }
-            }
-        }
+                    },
+                },
+            },
+        },
     };
+
+    // Savings summary
+    let interestSaved = 0;
+    let savedYears = 0;
+    let savedMonths = 0;
+    if (offsetResult) {
+        interestSaved = baseResult.totalInterest - offsetResult.totalInterest;
+        const baseMonths = baseResult.yearsUntilPaidOff * 12 + baseResult.monthsUntilPaidOff;
+        const offsetMonths = offsetResult.yearsUntilPaidOff * 12 + offsetResult.monthsUntilPaidOff;
+        const totalSavedMonths = Math.max(0, baseMonths - offsetMonths);
+        savedYears = Math.floor(totalSavedMonths / 12);
+        savedMonths = totalSavedMonths % 12;
+    }
+
+    // Table rows
+    const tableLength = Math.max(
+        baseResult.annualPayments.length,
+        offsetResult ? offsetResult.annualPayments.length : 0
+    );
+    const tableRows = Array.from({ length: tableLength }, (_, i) => {
+        const baseRow = baseResult.annualPayments[i];
+        const offsetRow = offsetResult?.annualPayments[i];
+        return (
+            <tr key={i}>
+                <th scope="row">{i === 0 ? '' : i}</th>
+                <td>{baseRow?.interest == null ? '' : moneyFormat.format(baseRow.interest)}</td>
+                <td>{baseRow ? moneyFormat.format(baseRow.remainingPrincipal) : ''}</td>
+                <td>{baseRow ? moneyFormat.format(baseRow.totalOwing) : ''}</td>
+                {offsetResult && (
+                    <>
+                        <td>{offsetRow == null || offsetRow.interest == null ? '' : moneyFormat.format(offsetRow.interest)}</td>
+                        <td>{offsetRow ? moneyFormat.format(offsetRow.remainingPrincipal) : ''}</td>
+                        <td>{offsetRow ? moneyFormat.format(offsetRow.totalOwing) : ''}</td>
+                    </>
+                )}
+            </tr>
+        );
+    });
 
     return (
         <Container>
             <Row>
                 <Col sm={{ size: 6, offset: 3 }}>
-                <Alert color="info" className="text-center mt-4 mb-3">
-                    Repayments: <strong>{moneyFormat.format(repayment)}</strong> {PaymentFrequency[frequency].toLowerCase()}
-                    <p className="mb-0">Total interest payable: <strong>{moneyFormat.format(totalInterest)}</strong></p>
-                    <p>Time until paid off: <strong>{yearsUntilPaidOff} years {monthsUntilPaidOff} months</strong></p>
-                </Alert>
+                    <Alert color="info" className="text-center mt-4 mb-3">
+                        Repayments: <strong>{moneyFormat.format(baseResult.repaymentAmount)}</strong>{' '}
+                        {PaymentFrequency[frequency].toLowerCase()}
+                        {offsetResult ? (
+                            <>
+                                <Row className="mt-2 text-start">
+                                    <Col>
+                                        <strong>Without offset</strong>
+                                        <p className="mb-0">
+                                            Total interest: <strong>{moneyFormat.format(baseResult.totalInterest)}</strong>
+                                        </p>
+                                        <p className="mb-0">
+                                            Paid off in: <strong>{formatYearsMonths(baseResult.yearsUntilPaidOff, baseResult.monthsUntilPaidOff)}</strong>
+                                        </p>
+                                    </Col>
+                                    <Col>
+                                        <strong>With offset</strong>
+                                        <p className="mb-0">
+                                            Total interest: <strong>{moneyFormat.format(offsetResult.totalInterest)}</strong>
+                                        </p>
+                                        <p className="mb-0">
+                                            Paid off in: <strong>{formatYearsMonths(offsetResult.yearsUntilPaidOff, offsetResult.monthsUntilPaidOff)}</strong>
+                                        </p>
+                                    </Col>
+                                </Row>
+                                <p className="mb-0 mt-2">
+                                    You save{' '}
+                                    <strong>{moneyFormat.format(interestSaved)}</strong> in interest
+                                    {(savedYears > 0 || savedMonths > 0) && (
+                                        <> and <strong>{formatYearsMonths(savedYears, savedMonths)}</strong></>
+                                    )}
+                                </p>
+                            </>
+                        ) : (
+                            <>
+                                <p className="mb-0">
+                                    Total interest payable: <strong>{moneyFormat.format(baseResult.totalInterest)}</strong>
+                                </p>
+                                <p>
+                                    Time until paid off:{' '}
+                                    <strong>{formatYearsMonths(baseResult.yearsUntilPaidOff, baseResult.monthsUntilPaidOff)}</strong>
+                                </p>
+                            </>
+                        )}
+                    </Alert>
                 </Col>
             </Row>
 
@@ -298,6 +363,13 @@ export default function RepaymentsTable({
                                     <th>Interest</th>
                                     <th>Principal</th>
                                     <th>Owing</th>
+                                    {offsetResult && (
+                                        <>
+                                            <th>Interest (offset)</th>
+                                            <th>Principal (offset)</th>
+                                            <th>Owing (offset)</th>
+                                        </>
+                                    )}
                                 </tr>
                             </thead>
                             <tbody>

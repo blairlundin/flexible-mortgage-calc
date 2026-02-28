@@ -8,9 +8,10 @@ import {
 import { PaymentFrequency, RepaymentType } from '../logic/MortgageCalculator';
 import { useMortgageStore, MortgageFormState } from '../store/mortgageStore';
 import RepaymentsTable from './RepaymentsTable';
+import OffsetScheduleEditor from './OffsetScheduleEditor';
 
 export default function RepaymentsForm() {
-    const { setField, ...formState } = useMortgageStore();
+    const { setField, addOffsetEntry: _add, removeOffsetEntry: _remove, updateOffsetEntry: _update, ...formState } = useMortgageStore();
 
     const handleChangeFloat = (event: ChangeEvent<HTMLInputElement>) => {
         const { name, value } = event.target;
@@ -150,6 +151,11 @@ export default function RepaymentsForm() {
                     </FormGroup>
                 </Col>
                 <Col sm="4" xs="12" />
+            </Row>
+            <Row className="justify-content-center">
+                <Col sm="auto" xs="12">
+                    <OffsetScheduleEditor />
+                </Col>
             </Row>
             <RepaymentsTable {...formState} />
         </Form>
